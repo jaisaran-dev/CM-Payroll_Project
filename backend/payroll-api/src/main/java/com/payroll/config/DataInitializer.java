@@ -26,7 +26,6 @@ public class DataInitializer implements CommandLineRunner {
                     .build();
         }
 
-        // Force Plain text password
         admin.setPasswordHash("admin123");
 
         userRepository.save(admin);
