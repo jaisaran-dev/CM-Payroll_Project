@@ -7,6 +7,5 @@ import { Toast } from './shared/components/toast/toast';
   selector: 'app-root',
   imports: [RouterOutlet, ConfirmationDialog, Toast],
   templateUrl: './app.html',
-  styleUrl: './app.css',
 })
 export class App {}
