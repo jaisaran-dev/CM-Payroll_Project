@@ -3,8 +3,8 @@ import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angula
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Employee, SalaryType } from '../../../core/models/employee.model';
 import { AuthService } from '../../../core/services/auth.service';
-import { EmployeeService } from '../../../core/services/employee.service';
 import { ConfirmationService } from '../../../core/services/confirmation.service';
+import { EmployeeService } from '../../../core/services/employee.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { salaryTypeLabel, workModeLabel } from '../../../core/utils/display-labels';
 import {
@@ -20,7 +20,6 @@ import { EmployeeForm } from '../employee-form/employee-form';
   standalone: true,
   imports: [DataTable, DataTableCell, CurrencyPipe, EmployeeForm],
   templateUrl: './employee-list.html',
-  styleUrl: './employee-list.css',
 })
 export class EmployeeList implements OnInit {
   private readonly toast = inject(ToastService);
@@ -80,8 +79,7 @@ export class EmployeeList implements OnInit {
   ]);
 
   rowKey = (e: Employee) => e.id;
-  canDeleteEmployee = (employee: Employee): boolean =>
-    employee.id !== this.auth.user()?.employeeId;
+  canDeleteEmployee = (employee: Employee): boolean => employee.id !== this.auth.user()?.employeeId;
 
   ngOnInit(): void {
     this.loadEmployees();

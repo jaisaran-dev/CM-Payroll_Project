@@ -33,7 +33,6 @@ import {
   standalone: true,
   imports: [CommonModule, FormsModule, DataTable, DataTableCell],
   templateUrl: './attendance-list.html',
-  styleUrl: './attendance-list.css',
 })
 export class AttendanceList implements OnInit, OnDestroy {
   private readonly attendanceService = inject(AttendanceService);
