@@ -1,0 +1,220 @@
+<div
+  class="app-modal-backdrop fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm"
+>
+  <div
+    class="app-modal-panel flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-2xl"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="leave-form-title"
+    (click)="$event.stopPropagation()"
+  >
+    <!-- Header -->
+    <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+      <div>
+        <h2 id="leave-form-title" class="text-lg font-bold text-slate-800">
+          {{ isEdit ? 'Edit Leave Request' : 'Apply Leave' }}
+        </h2>
+        <p class="text-xs text-slate-500">
+          {{
+            isEdit ? 'Update your pending request' : 'Fill in the details to submit your request'
+          }}
+        </p>
+      </div>
+      <button
+        type="button"
+        (click)="close()"
+        aria-label="Close"
+        class="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+      >
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <form
+      [formGroup]="form"
+      (ngSubmit)="submit()"
+      novalidate
+      class="flex flex-col gap-5 overflow-y-auto px-6 py-5"
+    >
+      <!-- Leave Type -->
+      <div>
+        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Leave Type <span class="text-red-500">*</span>
+        </label>
+        <div class="inline-flex rounded-lg bg-slate-100 p-1">
+          <label
+            class="cursor-pointer rounded-md px-5 py-2 text-sm font-semibold text-slate-500 transition has-checked:bg-white has-checked:text-blue-700 has-checked:shadow"
+          >
+            <input type="radio" formControlName="leaveType" value="Full Day" class="sr-only" />
+            Full Day
+          </label>
+          <label
+            class="cursor-pointer rounded-md px-5 py-2 text-sm font-semibold text-slate-500 transition has-checked:bg-white has-checked:text-blue-700 has-checked:shadow"
+          >
+            <input type="radio" formControlName="leaveType" value="Half Day" class="sr-only" />
+            Half Day
+          </label>
+        </div>
+      </div>
+
+      <!-- Half day session -->
+      @if (isHalfDay) {
+        <div>
+          <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Session <span class="text-red-500">*</span>
+          </label>
+          <div class="grid grid-cols-2 gap-3">
+            <label
+              class="flex cursor-pointer items-center gap-2 rounded-lg border-2 border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 transition hover:bg-slate-100 has-checked:border-blue-600 has-checked:bg-blue-50 has-checked:font-semibold has-checked:text-blue-700"
+            >
+              <input
+                type="radio"
+                formControlName="halfDaySession"
+                value="Morning Half"
+                class="h-4 w-4 accent-blue-600"
+              />
+              Morning Half
+            </label>
+            <label
+              class="flex cursor-pointer items-center gap-2 rounded-lg border-2 border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 transition hover:bg-slate-100 has-checked:border-blue-600 has-checked:bg-blue-50 has-[:checked]:font-semibold has-[:checked]:text-blue-700"
+            >
+              <input
+                type="radio"
+                formControlName="halfDaySession"
+                value="Afternoon Half"
+                class="h-4 w-4 accent-blue-600"
+              />
+              Afternoon Half
+            </label>
+          </div>
+        </div>
+      }
+
+      <!-- Dates -->
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label
+            for="startDate"
+            class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500"
+          >
+            Start Date <span class="text-red-500">*</span>
+          </label>
+          <input
+            id="startDate"
+            type="date"
+            formControlName="startDate"
+            [min]="today"
+            class="app-control w-full rounded-lg border-2 bg-slate-50 px-3 text-sm text-slate-800 outline-none transition focus:border-blue-600 focus:bg-white"
+            [class]="invalid('startDate') ? 'border-red-500' : 'border-slate-200'"
+          />
+          @if (invalid('startDate')) {
+            <p class="mt-1 text-xs text-red-600">Start date is required</p>
+          }
+        </div>
+
+        <div>
+          <label
+            for="endDate"
+            class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500"
+          >
+            End Date <span class="text-red-500">*</span>
+          </label>
+          <input
+            id="endDate"
+            type="date"
+            formControlName="endDate"
+            [min]="form.controls.startDate.value || today"
+            [readonly]="isHalfDay"
+            class="app-control w-full rounded-lg border-2 bg-slate-50 px-3 text-sm text-slate-800 outline-none transition focus:border-blue-600 focus:bg-white read-only:cursor-not-allowed read-only:bg-slate-100 read-only:text-slate-400"
+            [class]="
+              invalid('endDate') || form.hasError('dateRange')
+                ? 'border-red-500'
+                : 'border-slate-200'
+            "
+          />
+          @if (form.hasError('dateRange')) {
+            <p class="mt-1 text-xs text-red-600">End date can't be before start date</p>
+          } @else if (invalid('endDate')) {
+            <p class="mt-1 text-xs text-red-600">End date is required</p>
+          }
+        </div>
+      </div>
+
+      @if (totalDays > 0) {
+        <div class="rounded-lg bg-blue-50 px-4 py-2.5 text-sm text-blue-800">
+          Total leave:
+          <span class="font-bold">{{ totalDays }} {{ totalDays === 1 ? 'day' : 'days' }}</span>
+        </div>
+      }
+
+      <!-- Subject -->
+      <div>
+        <label
+          for="subject"
+          class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500"
+        >
+          Subject <span class="text-red-500">*</span>
+        </label>
+        <input
+          id="subject"
+          type="text"
+          formControlName="subject"
+          maxlength="80"
+          placeholder="e.g. Family function"
+          class="app-control w-full rounded-lg border-2 bg-slate-50 px-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:bg-white"
+          [class]="invalid('subject') ? 'border-red-500' : 'border-slate-200'"
+        />
+        @if (invalid('subject')) {
+          <p class="mt-1 text-xs text-red-600">Subject is required (min 3 characters)</p>
+        }
+      </div>
+
+      <!-- Reason -->
+      <div>
+        <label
+          for="reason"
+          class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500"
+        >
+          Leave Reason <span class="text-red-500">*</span>
+        </label>
+        <textarea
+          id="reason"
+          rows="4"
+          formControlName="reason"
+          maxlength="500"
+          placeholder="Briefly explain the reason for your leave"
+          class="w-full resize-y rounded-lg border-2 bg-slate-50 px-3 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:bg-white"
+          [class]="invalid('reason') ? 'border-red-500' : 'border-slate-200'"
+        ></textarea>
+        <div class="mt-1 flex justify-between text-xs">
+          @if (invalid('reason')) {
+            <p class="text-red-600">Reason is required (min 10 characters)</p>
+          } @else {
+            <span></span>
+          }
+          <span class="text-slate-400">{{ form.controls.reason.value.length }}/500</span>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="flex justify-end gap-3 border-t border-slate-100 pt-4">
+        <button
+          type="button"
+          (click)="close()"
+          class="cursor-pointer app-control rounded-lg px-5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="cursor-pointer app-control rounded-lg bg-blue-600 px-5 text-sm font-semibold text-white transition hover:bg-blue-700 active:scale-95"
+        >
+          {{ isEdit ? 'Update Request' : 'Submit Request' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,15 @@
+.emp-select-panel {
+  transform-origin: top;
+  animation: empSelectIn 0.16s ease-out;
+}
+
+@keyframes empSelectIn {
+  from {
+    opacity: 0;
+    transform: scaleY(0.94) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1) translateY(0);
+  }
+}

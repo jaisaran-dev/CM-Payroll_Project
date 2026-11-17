@@ -1,0 +1,456 @@
+<div class="w-full rounded-xl border border-gray-200 bg-white p-3 sm:p-6">
+  <!-- ============ Toolbar ============ -->
+  <div class="mb-6 space-y-4">
+    <div class="flex flex-wrap items-center gap-3">
+      <!-- Search -->
+      @if (enableSearch() && searchKeys().length > 0) {
+        <div class="relative min-w-52 flex-1">
+          <app-icon
+            name="search"
+            class="pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-gray-400"
+          />
+          <input
+            type="text"
+            [value]="search()"
+            (input)="onSearch($any($event.target).value)"
+            [placeholder]="searchPlaceholder()"
+            class="app-control w-full rounded-lg border border-gray-200 bg-gray-100 pr-4 pl-10 text-sm text-gray-900 transition-all duration-200 outline-none placeholder:text-gray-500 hover:border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+          />
+        </div>
+      }
+
+      <div class="ml-auto flex flex-wrap items-center gap-2">
+        <!-- Extra toolbar content: <div tableFilters>...</div> -->
+        <ng-content select="[tableFilters]" />
+
+        <!-- Filters dropdown -->
+        @if (enableFilter() && filters().length > 0) {
+          <div class="relative" #filterMenu>
+            <button
+              type="button"
+              (click)="filterMenuOpen.set(!filterMenuOpen())"
+              class="app-control flex cursor-pointer items-center gap-2 rounded-lg border px-4 text-sm font-semibold transition-all duration-200"
+              [class]="
+                totalActiveFilters() > 0
+                  ? 'border-indigo-600 bg-indigo-600 text-white hover:bg-indigo-700'
+                  : 'border-gray-200 bg-white text-gray-900 hover:border-indigo-300 hover:bg-gray-50'
+              "
+            >
+              <app-icon name="filter" class="h-4 w-4" />
+              <span>Filters</span>
+              @if (totalActiveFilters() > 0) {
+                <span class="rounded-full bg-white/20 px-2 py-0.5 text-xs">{{
+                  totalActiveFilters()
+                }}</span>
+              }
+              <app-icon
+                name="chevron-down"
+                class="h-3.5 w-3.5 transition-transform duration-200"
+                [class.rotate-180]="filterMenuOpen()"
+              />
+            </button>
+
+            @if (filterMenuOpen()) {
+              <div
+                class="absolute right-0 z-30 mt-2 w-72 max-w-[90vw] rounded-lg border border-gray-200 bg-white p-3 shadow-lg"
+              >
+                <div class="mb-3 flex items-center justify-between">
+                  <h4 class="text-sm font-semibold">Filters</h4>
+                  @if (totalActiveFilters() > 0) {
+                    <button
+                      type="button"
+                      (click)="clearAllFilters()"
+                      class="cursor-pointer text-xs text-gray-500 transition-colors hover:text-indigo-600"
+                    >
+                      Clear all
+                    </button>
+                  }
+                </div>
+
+                <div class="max-h-80 space-y-3 overflow-y-auto">
+                  @for (filter of filters(); track filter.key) {
+                    <div>
+                      <div
+                        class="mb-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase"
+                      >
+                        {{ filter.label }}
+                      </div>
+                      <div class="space-y-1">
+                        @for (option of filter.options; track option.value) {
+                          <button
+                            type="button"
+                            (click)="toggleFilter(filter.key, option.value)"
+                            class="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm transition-all duration-200 hover:bg-gray-100"
+                          >
+                            <span
+                              class="flex h-4 w-4 items-center justify-center rounded-xs border transition-all duration-200"
+                              [class]="
+                                isFilterChecked(filter.key, option.value)
+                                  ? 'border-indigo-600 bg-indigo-600'
+                                  : 'border-gray-300'
+                              "
+                            >
+                              @if (isFilterChecked(filter.key, option.value)) {
+                                <app-icon
+                                  name="check"
+                                  class="h-2.5 w-2.5 text-white"
+                                  [strokeWidth]="3"
+                                />
+                              }
+                            </span>
+                            {{ option.label }}
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Column visibility -->
+        @if (enableColumnVisibility()) {
+          <div class="relative" #colMenu>
+            <button
+              type="button"
+              (click)="colMenuOpen.set(!colMenuOpen())"
+              class="app-control flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-900 transition-all duration-200 hover:border-indigo-300 hover:bg-gray-50"
+            >
+              <app-icon name="sliders" class="h-4 w-4" />
+              <span class="hidden sm:inline">Columns</span>
+            </button>
+
+            @if (colMenuOpen()) {
+              <div
+                class="absolute right-0 z-30 mt-2 min-w-44 overflow-hidden rounded-xl border border-gray-200 bg-white p-1.5 shadow-lg"
+              >
+                @for (col of columns(); track col.key) {
+                  <button
+                    type="button"
+                    (click)="toggleColumn(col.key)"
+                    class="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-gray-700 transition-all duration-200 hover:bg-gray-100"
+                  >
+                    <span
+                      class="flex h-4 w-4 items-center justify-center rounded-xs border transition-all duration-200"
+                      [class]="
+                        isColumnVisible(col.key)
+                          ? 'border-indigo-600 bg-indigo-600'
+                          : 'border-gray-300'
+                      "
+                    >
+                      @if (isColumnVisible(col.key)) {
+                        <app-icon name="check" class="h-2.5 w-2.5 text-white" [strokeWidth]="3" />
+                      }
+                    </span>
+                    {{ col.header }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Add button -->
+        @if (canAdd()) {
+          <button
+            type="button"
+            (click)="add.emit()"
+            aria-label="Add"
+            class="app-control flex cursor-pointer items-center gap-2 rounded-lg bg-brand-primary px-4 text-sm font-semibold whitespace-nowrap text-white hover:bg-brand-primary-hover"
+          >
+            <app-icon name="plus" class="h-4 w-4" />
+            <span class="hidden sm:inline">{{ addName() }}</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Active filter pills -->
+    @if (totalActiveFilters() > 0) {
+      <div class="flex flex-wrap items-center gap-2">
+        @for (pill of activePills(); track pill.key + pill.value) {
+          <span
+            class="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-700"
+          >
+            {{ pill.text }}
+            <button
+              type="button"
+              (click)="toggleFilter(pill.key, pill.value)"
+              class="cursor-pointer rounded-full p-0.5 transition-colors hover:bg-indigo-100"
+              aria-label="Remove filter"
+            >
+              <app-icon name="x" class="h-3.5 w-3.5" />
+            </button>
+          </span>
+        }
+        <button
+          type="button"
+          (click)="clearAllFilters()"
+          class="cursor-pointer text-sm text-gray-500 transition-colors hover:text-indigo-600"
+        >
+          Clear all
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- ============ Table ============ -->
+  <div class="min-h-72 overflow-hidden rounded-xl border border-gray-200">
+    <div class="overflow-x-auto">
+      <table appTable class="min-w-180 border-collapse text-[15px]">
+        <thead appTableHeader>
+          <tr appTableRow class="border-b border-gray-200 bg-indigo-600 hover:bg-indigo-600!">
+            @if (selectable()) {
+              <th appTableHead class="h-auto! w-12 px-4! py-4">
+                <app-checkbox
+                  [checked]="allSelected()"
+                  [indeterminate]="someSelected()"
+                  ariaLabel="Select all rows on this page"
+                  (changed)="toggleAllOnPage()"
+                />
+              </th>
+            }
+
+            @for (col of visibleColumns(); track col.key) {
+              <th
+                appTableHead
+                class="h-auto! px-4! py-4 text-base font-bold text-white"
+                [class]="(col.className ?? '') + (col.key === 'actions' ? ' text-center' : '')"
+                [attr.aria-sort]="
+                  sortKey() === col.key ? (sortDir() === 'asc' ? 'ascending' : 'descending') : null
+                "
+              >
+                @if (col.key === 'actions') {
+                  <div class="flex items-center justify-center">{{ col.header }}</div>
+                } @else if (col.sortable === false) {
+                  {{ col.header }}
+                } @else {
+                  <button
+                    type="button"
+                    (click)="toggleSort(col.key)"
+                    class="inline-flex cursor-pointer items-center gap-1.5 text-white transition-colors duration-200 hover:text-white/80"
+                  >
+                    {{ col.header }}
+                    <app-icon
+                      name="chevrons-up-down"
+                      class="h-4 w-4"
+                      [class]="sortKey() === col.key ? 'opacity-100' : 'opacity-60'"
+                    />
+                    @if (sortKey() === col.key) {
+                      <span class="text-xs">{{ sortDir() === 'asc' ? '↑' : '↓' }}</span>
+                    }
+                  </button>
+                }
+              </th>
+            }
+
+            @if (hasRowActions()) {
+              <th appTableHead class="h-auto! px-4! py-4 text-base font-bold text-white">
+                <div class="flex items-center justify-center">
+                  {{ actionColumnHeader() }}
+                </div>
+              </th>
+            }
+          </tr>
+        </thead>
+
+        <tbody appTableBody>
+          @if (isLoading()) {
+            <tr appTableRow>
+              <td appTableCell [attr.colspan]="colSpan()" class="py-10! text-center text-gray-500">
+                Loading…
+              </td>
+            </tr>
+          } @else if (pageRows().length === 0) {
+            <tr appTableRow>
+              <td appTableCell [attr.colspan]="colSpan()" class="py-10! text-center text-gray-500">
+                {{ emptyMessage() }}
+              </td>
+            </tr>
+          } @else {
+            @for (row of pageRows(); track keyExtractor()(row)) {
+              <tr
+                appTableRow
+                class="border-gray-200"
+                [class]="isSelected(row) ? 'bg-indigo-50 hover:bg-indigo-50!' : ''"
+              >
+                @if (selectable()) {
+                  <td appTableCell class="px-4 py-3.5">
+                    <app-checkbox
+                      [checked]="isSelected(row)"
+                      [ariaLabel]="'Select row ' + rowKey(row)"
+                      (changed)="toggleRow(row)"
+                    />
+                  </td>
+                }
+
+                @for (col of visibleColumns(); track col.key) {
+                  <td
+                    appTableCell
+                    class="px-4 py-3.5 text-sm leading-snug text-gray-900"
+                    [class]="
+                      (col.cellClassName ?? '') + (col.key === 'actions' ? ' text-center' : '')
+                    "
+                  >
+                    @if (col.key === 'actions') {
+                      <div class="flex items-center justify-center gap-1.5">
+                        @if (templateMap().get(col.key); as tpl) {
+                          <ng-container *ngTemplateOutlet="tpl; context: { $implicit: row }" />
+                        } @else {
+                          {{ cellValue(col, row) }}
+                        }
+                      </div>
+                    } @else {
+                      @if (templateMap().get(col.key); as tpl) {
+                        <ng-container *ngTemplateOutlet="tpl; context: { $implicit: row }" />
+                      } @else {
+                        {{ cellValue(col, row) }}
+                      }
+                    }
+                  </td>
+                }
+
+                @if (hasRowActions()) {
+                  <td appTableCell class="px-4 py-3.5 text-center">
+                    <div class="flex items-center justify-center gap-1.5">
+                      @if (canView()) {
+                        <button
+                          type="button"
+                          (click)="viewRow.emit(row)"
+                          class="group cursor-pointer rounded-lg bg-green-50 p-2 text-green-600 transition-all duration-200 hover:bg-green-100 hover:text-green-700"
+                          aria-label="View"
+                          title="View details"
+                        >
+                          <app-icon
+                            name="eye"
+                            class="h-4 w-4 transition-transform group-hover:scale-110"
+                          />
+                        </button>
+                      }
+                      @if (canEdit()) {
+                        <button
+                          type="button"
+                          (click)="editRow.emit(row)"
+                          class="group cursor-pointer rounded-lg bg-indigo-50 p-2 text-indigo-600 transition-all duration-200 hover:bg-indigo-100"
+                          aria-label="Edit"
+                          title="Edit"
+                        >
+                          <app-icon
+                            name="pencil"
+                            class="h-4 w-4 transition-transform group-hover:scale-110"
+                          />
+                        </button>
+                      }
+                      @if (canDelete()) {
+                        <button
+                          type="button"
+                          (click)="deleteRow.emit(row)"
+                          class="group cursor-pointer rounded-lg bg-red-50 p-2 text-red-600 transition-all duration-200 hover:bg-red-100 hover:text-red-700"
+                          aria-label="Delete"
+                          title="Delete"
+                        >
+                          <app-icon
+                            name="trash"
+                            class="h-4 w-4 transition-transform group-hover:scale-110"
+                          />
+                        </button>
+                      }
+                    </div>
+                  </td>
+                }
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============ Footer ============ -->
+  <div
+    class="mt-4 flex flex-col gap-3 px-1 text-sm text-gray-500 sm:flex-row sm:items-center sm:justify-between sm:px-3"
+  >
+    <span>
+      @if (selectable()) {
+        {{ selected().size }} of {{ sorted().length }} row(s) selected.
+      } @else {
+        {{ sorted().length }} row(s).
+      }
+    </span>
+
+    <div class="flex items-center justify-center gap-2 overflow-x-auto sm:justify-end">
+      <button
+        type="button"
+        (click)="goTo(0)"
+        [disabled]="currentPage() === 0"
+        aria-label="First page"
+        class="hidden h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-full border border-gray-200 bg-white text-gray-900 transition-all duration-200 hover:border-indigo-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 sm:flex"
+      >
+        <app-icon name="chevrons-left" class="h-4 w-4" />
+      </button>
+
+      <button
+        type="button"
+        (click)="goTo(currentPage() - 1)"
+        [disabled]="currentPage() === 0"
+        class="flex h-12 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-full border border-gray-200 bg-white px-3 font-semibold text-gray-900 transition-all duration-200 hover:border-indigo-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 sm:px-4"
+      >
+        <app-icon name="chevron-left" class="h-4 w-4" />
+        <span class="hidden sm:inline">Previous</span>
+      </button>
+
+      <!-- Page numbers (tablet / desktop) -->
+      <div class="hidden items-center gap-1.5 sm:flex">
+        @for (p of pageNumbers(); track $index) {
+          @if (p < 0) {
+            <span class="flex h-12 w-10 items-center justify-center text-gray-500">…</span>
+          } @else {
+            <button
+              type="button"
+              (click)="goTo(p)"
+              [attr.aria-label]="'Page ' + (p + 1)"
+              [attr.aria-current]="p === currentPage() ? 'page' : null"
+              class="flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border font-semibold transition-all duration-200"
+              [class]="
+                p === currentPage()
+                  ? 'border-indigo-600 bg-indigo-600 text-white'
+                  : 'border-gray-200 bg-white text-gray-900 hover:border-indigo-300 hover:bg-gray-50'
+              "
+            >
+              {{ p + 1 }}
+            </button>
+          }
+        }
+      </div>
+
+      <!-- "1 / 5" (phones) -->
+      <span
+        class="flex h-12 shrink-0 items-center justify-center px-2 text-sm font-semibold text-gray-900 sm:hidden"
+      >
+        {{ currentPage() + 1 }} / {{ pageCount() }}
+      </span>
+
+      <button
+        type="button"
+        (click)="goTo(currentPage() + 1)"
+        [disabled]="currentPage() >= pageCount() - 1"
+        class="flex h-12 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-full border border-gray-200 bg-white px-3 font-semibold text-gray-900 transition-all duration-200 hover:border-indigo-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 sm:px-4"
+      >
+        <span class="hidden sm:inline">Next</span>
+        <app-icon name="chevron-right" class="h-4 w-4" />
+      </button>
+
+      <button
+        type="button"
+        (click)="goTo(pageCount() - 1)"
+        [disabled]="currentPage() >= pageCount() - 1"
+        aria-label="Last page"
+        class="hidden h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-full border border-gray-200 bg-white text-gray-900 transition-all duration-200 hover:border-indigo-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 sm:flex"
+      >
+        <app-icon name="chevrons-right" class="h-4 w-4" />
+      </button>
+    </div>
+  </div>
+</div>

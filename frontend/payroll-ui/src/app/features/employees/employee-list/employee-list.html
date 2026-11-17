@@ -1,0 +1,48 @@
+<app-data-table
+  [data]="employees()"
+  [columns]="columns"
+  [keyExtractor]="rowKey"
+  [searchKeys]="['name', 'email', 'department']"
+  searchPlaceholder="Search employees..."
+  [filters]="filters()"
+  [isLoading]="isLoading()"
+  emptyMessage="No employees found."
+  addName="Add Employee"
+  [selectable]="false"
+  [canAdd]="true"
+  [canView]="false"
+  [canEdit]="true"
+  [canDelete]="true"
+  (add)="onAdd()"
+  (viewRow)="onView($event)"
+  (editRow)="onEdit($event)"
+  (deleteRow)="onDelete($event)"
+>
+  <!-- Name column: avatar + name + email -->
+  <ng-template appCell="name" let-row>
+    <div class="flex items-center gap-3">
+      <span
+        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-gray-600 ring-1 ring-gray-200"
+      >
+        {{ initials(row.name) }}
+      </span>
+      <div class="min-w-0">
+        <p class="truncate font-medium text-gray-900">{{ row.name }}</p>
+        <p class="truncate text-xs text-gray-500">{{ row.email }}</p>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Salary column: formatted as currency -->
+  <ng-template appCell="salaryAmount" let-row>
+    {{ row.salaryAmount | currency: 'INR' }}
+  </ng-template>
+</app-data-table>
+
+@if (isFormOpen()) {
+  <app-employee-form
+    [employee]="editingEmployee()"
+    (saved)="onSaved($event)"
+    (closed)="closeForm()"
+  />
+}

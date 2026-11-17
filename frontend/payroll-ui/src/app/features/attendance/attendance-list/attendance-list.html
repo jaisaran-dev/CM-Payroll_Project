@@ -1,0 +1,456 @@
+<div class="mx-auto space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div></div>
+
+    <!-- Date Picker (Admin Only) -->
+    @if (isAdmin) {
+      <div class="flex items-center gap-2">
+        <label for="attendance-date" class="text-sm font-medium text-gray-700">Select Date:</label>
+        <input
+          id="attendance-date"
+          type="date"
+          [value]="selectedDate()"
+          (change)="onDateChange($event)"
+          [max]="todayDate"
+          class="app-control rounded-lg border border-gray-300 px-3 text-sm outline-none transition-all focus:border-indigo-500 focus:ring-indigo-500"
+        />
+      </div>
+    }
+  </div>
+
+  <!-- ========================================== -->
+  <!-- ADMIN VIEW -->
+  <!-- ========================================== -->
+  @if (isAdmin) {
+    <!-- ================= SUMMARY CARDS ================= -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+      <!-- Total Employees -->
+      <div
+        class="rounded-xl border border-gray-200 bg-white px-5 py-6 sm:px-6 sm:py-7 h-full flex items-center"
+      >
+        <div class="flex items-center gap-4">
+          <div
+            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-white"
+          >
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+              ></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
+              Total Employees
+            </p>
+            <p class="text-2xl font-bold text-gray-900 tabular-nums">
+              {{ animatedTotal() }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Present -->
+      <div
+        class="rounded-xl border border-gray-200 bg-white px-5 py-6 sm:px-6 sm:py-7 h-full flex items-center"
+      >
+        <div class="flex items-center gap-4">
+          <div
+            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-green-700 text-white"
+          >
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2.5"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Present</p>
+            <p class="text-2xl font-bold text-gray-900 tabular-nums">
+              {{ animatedPresent() }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Absent -->
+      <div
+        class="rounded-xl border border-gray-200 bg-white px-5 py-6 sm:px-6 sm:py-7 h-full flex items-center"
+      >
+        <div class="flex items-center gap-4">
+          <div
+            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-red-700 text-white"
+          >
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2.5"
+                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Absent</p>
+            <p class="text-2xl font-bold text-gray-900 tabular-nums">
+              {{ animatedAbsent() }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    @if (selectedEmployeeIds().length > 0) {
+      <div
+        class="bg-indigo-50 border border-indigo-200 rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2"
+      >
+        <div class="flex items-center gap-2 text-indigo-800 font-medium">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+            ></path>
+          </svg>
+          {{ selectedEmployeeIds().length }} employee(s) selected
+        </div>
+        <div class="flex items-center gap-3">
+          <button
+            (click)="onBulkMark('PRESENT')"
+            [disabled]="isBulkMarking() || allSelectedPresent()"
+            [title]="
+              allSelectedPresent()
+                ? 'All selected employees are already marked present'
+                : 'Mark selected as present'
+            "
+            class="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            @if (isBulkMarking()) {
+              <span
+                class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"
+              ></span>
+            }
+            Mark Selected Present
+          </button>
+          <button
+            (click)="onBulkMark('ABSENT')"
+            [disabled]="isBulkMarking() || allSelectedAbsent()"
+            [title]="
+              allSelectedAbsent()
+                ? 'All selected employees are already marked absent'
+                : 'Mark selected as absent'
+            "
+            class="px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            @if (isBulkMarking()) {
+              <span
+                class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"
+              ></span>
+            }
+            Mark Selected Absent
+          </button>
+          <button
+            (click)="clearSelectionFromTemplate()"
+            class="text-sm text-gray-500 hover:text-gray-700 underline ml-2"
+          >
+            Clear
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- ================= DATA TABLE ================= -->
+    <app-data-table
+      [data]="attendanceList()"
+      [columns]="columns"
+      [keyExtractor]="rowKey"
+      [searchKeys]="['name', 'role', 'remarks']"
+      searchPlaceholder="Search employees..."
+      [filters]="filters()"
+      [isLoading]="isLoading()"
+      emptyMessage="No active employees found for this date."
+      [selectable]="true"
+      [canAdd]="false"
+      [canView]="false"
+      [canEdit]="false"
+      [canDelete]="false"
+      (selectionChange)="onSelectionChange($event)"
+    >
+      <ng-template appCell="name" let-row>
+        <div class="font-medium text-gray-900">{{ row.name }}</div>
+      </ng-template>
+
+      <ng-template appCell="status" let-row>
+        @if (row.status === 'PRESENT') {
+          <span
+            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
+          >
+            Present
+          </span>
+        } @else if (row.status === 'ABSENT') {
+          <span
+            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
+          >
+            Absent
+          </span>
+        } @else {
+          <span
+            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"
+          >
+            Not Marked
+          </span>
+        }
+      </ng-template>
+
+      <!-- ================= ACTIONS ================= -->
+      <ng-template appCell="actions" let-row>
+        <div class="flex items-center gap-2 justify-center">
+          <!-- ---------- Mark PRESENT ---------- -->
+          <button
+            type="button"
+            (click)="onMarkAttendance(row.employeeId, 'PRESENT')"
+            [disabled]="isMarking() === row.employeeId || row.status === 'PRESENT'"
+            [attr.aria-label]="'Mark ' + row.name + ' as present'"
+            [attr.aria-pressed]="row.status === 'PRESENT'"
+            [title]="row.status === 'PRESENT' ? 'Already marked present' : 'Mark as present'"
+            class="app-action-button app-action-success cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
+          >
+            @if (isMarking() === row.employeeId) {
+              <svg
+                class="absolute top-1/2 left-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 animate-spin"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+            }
+            <span [class.invisible]="isMarking() === row.employeeId">Present</span>
+          </button>
+
+          <!-- ---------- Mark ABSENT ---------- -->
+          <button
+            type="button"
+            (click)="onMarkAttendance(row.employeeId, 'ABSENT')"
+            [disabled]="isMarking() === row.employeeId || row.status === 'ABSENT'"
+            [attr.aria-label]="'Mark ' + row.name + ' as absent'"
+            [attr.aria-pressed]="row.status === 'ABSENT'"
+            [title]="row.status === 'ABSENT' ? 'Already marked absent' : 'Mark as absent'"
+            class="app-action-button app-action-danger cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
+          >
+            @if (isMarking() === row.employeeId) {
+              <svg
+                class="absolute top-1/2 left-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 animate-spin"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+            }
+            <span [class.invisible]="isMarking() === row.employeeId">Absent</span>
+          </button>
+        </div>
+      </ng-template>
+    </app-data-table>
+  }
+
+  <!-- ========================================== -->
+  <!-- EMPLOYEE VIEW -->
+  <!-- ========================================== -->
+  @else {
+    <div class="max-w-2xl mx-auto bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mt-8">
+      <div class="text-center mb-8">
+        <div
+          class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-100 text-indigo-600 mb-4"
+        >
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+            ></path>
+          </svg>
+        </div>
+        <h2 class="text-xl font-bold text-gray-900">Mark Today's Attendance</h2>
+        <p class="text-gray-500 mt-1">{{ todayDate | date: 'fullDate' }}</p>
+
+        <!-- Show Current Status -->
+        @if (isLoadingStatus()) {
+          <div class="mt-4 flex items-center justify-center gap-2 text-sm text-gray-500">
+            <svg
+              class="animate-spin h-4 w-4"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              ></circle>
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+            Checking status...
+          </div>
+        } @else if (currentStatus()) {
+          <div class="mt-4 flex items-center justify-center gap-2 flex-wrap">
+            <span class="text-sm text-gray-600 font-medium">Current Status:</span>
+            @if (currentStatus() === 'PRESENT') {
+              <span
+                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-green-100 text-green-800"
+              >
+                PRESENT
+              </span>
+            } @else {
+              <span
+                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-red-100 text-red-800"
+              >
+                ABSENT
+              </span>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Remarks Input -->
+      <div class="mb-6">
+        <label for="remarks" class="block text-sm font-medium text-gray-700 mb-2"
+          >Remarks (Optional)</label
+        >
+        <input
+          id="remarks"
+          type="text"
+          [(ngModel)]="employeeRemarks"
+          placeholder="e.g. Working from home, feeling sick..."
+          [disabled]="isEmployeeMarking()"
+          class="app-control w-full rounded-lg border border-gray-300 px-3 text-sm outline-none transition-all focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-50 disabled:text-gray-500"
+        />
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Mark Present Button -->
+        <button
+          type="button"
+          (click)="onMarkSelf('PRESENT')"
+          [disabled]="isEmployeeMarking() || currentStatus() === 'PRESENT'"
+          class="cursor-pointer app-control flex items-center justify-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 text-sm font-semibold text-green-700 transition-colors hover:bg-green-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          @if (isEmployeeMarking()) {
+            <svg
+              class="animate-spin h-5 w-5 text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              ></circle>
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+          } @else {
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 13l4 4L19 7"
+              ></path>
+            </svg>
+          }
+          Mark Present
+        </button>
+
+        <!-- Mark Absent Button -->
+        <button
+          type="button"
+          (click)="onMarkSelf('ABSENT')"
+          [disabled]="isEmployeeMarking() || currentStatus() === 'ABSENT'"
+          class="cursor-pointer app-control flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          @if (isEmployeeMarking()) {
+            <svg
+              class="animate-spin h-5 w-5 text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              ></circle>
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+          } @else {
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
+            </svg>
+          }
+          Mark Absent
+        </button>
+      </div>
+    </div>
+  }
+</div>

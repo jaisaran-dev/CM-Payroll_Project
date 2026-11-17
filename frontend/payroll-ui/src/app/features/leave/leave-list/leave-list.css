@@ -1,0 +1,28 @@
+/* Same modal animation as the leave form, used by the cancel-confirm dialog */
+.emp-backdrop {
+  animation: empBackdropIn 0.2s ease-out;
+}
+
+.emp-panel {
+  animation: empPanelIn 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes empBackdropIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes empPanelIn {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
