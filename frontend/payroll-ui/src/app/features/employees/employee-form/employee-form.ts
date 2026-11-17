@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, HostListener, OnInit, inject, input, output, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Employee, SalaryType, SystemRole, WorkMode } from '../../../core/models/employee.model';
@@ -6,7 +7,6 @@ import {
   EmployeeService,
   UpdateEmployeePayload,
 } from '../../../core/services/employee.service';
-import { ToastService } from '../../../core/services/toast.service';
 import { CustomSelect, SelectOption } from '../../../shared/components/custom-select/custom-select';
 import { Icon } from '../../../shared/components/icon/icon';
 
@@ -20,7 +20,6 @@ import { Icon } from '../../../shared/components/icon/icon';
 export class EmployeeForm implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly employeeService = inject(EmployeeService);
-  private readonly toast = inject(ToastService);
 
   employee = input<Employee | null>(null);
   saved = output<Employee>();
@@ -38,7 +37,7 @@ export class EmployeeForm implements OnInit {
   workModeOptions: SelectOption[] = [
     { label: 'Work From Home', value: 'WFH' },
     { label: 'Office', value: 'OFFICE' },
-    { label: 'On-site', value: 'ON_SITE' },
+    { label: 'On Site', value: 'ON_SITE' },
   ];
 
   systemRoleOptions: { value: SystemRole; label: string; description: string }[] = [
@@ -49,7 +48,7 @@ export class EmployeeForm implements OnInit {
   form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
     email: ['', [Validators.required, Validators.email]],
-    password: [''], // Validator added conditionally in ngOnInit
+    password: [''],
     salaryType: ['MONTHLY' as SalaryType, Validators.required],
     salaryAmount: [0, [Validators.required, Validators.min(100)]],
     workMode: ['OFFICE' as WorkMode, Validators.required],
@@ -66,7 +65,6 @@ export class EmployeeForm implements OnInit {
       this.form.patchValue({
         name: e.name,
         email: e.email ?? '',
-        password: e.password ?? '',
         salaryType: e.salaryType,
         salaryAmount: e.salaryAmount,
         workMode: e.workMode ?? 'OFFICE',
@@ -98,15 +96,13 @@ export class EmployeeForm implements OnInit {
     const v = this.form.getRawValue();
     const existing = this.employee();
 
-    // Only send the password if the user actually edited it.
-    // Empty string = backend ignores (preserves existing hash).
     const passwordToSend = this.form.controls.password.dirty ? v.password : '';
 
     const request$ = existing
       ? this.employeeService.update(existing.id, {
           name: v.name,
           email: v.email,
-          password: passwordToSend, // <-- not always the prefilled value
+          password: passwordToSend,
           workMode: v.workMode,
           salaryType: v.salaryType,
           salaryAmount: v.salaryAmount,
@@ -127,10 +123,12 @@ export class EmployeeForm implements OnInit {
         this.isSaving.set(false);
         this.saved.emit(employee);
       },
-      error: (err: any) => {
-        console.error('Failed to save employee', err);
+      error: (err: HttpErrorResponse) => {
         this.isSaving.set(false);
-        const errorMsg = err.error?.message || 'Could not save employee. Please try again.';
+        const errorMsg =
+          typeof err.error?.message === 'string'
+            ? err.error.message
+            : 'Could not save employee. Please try again.';
         this.serverError.set(errorMsg);
       },
     });

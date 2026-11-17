@@ -40,7 +40,9 @@ const DEFAULT_TITLE = 'Payroll & Attendance';
       <div class="flex items-center gap-3 sm:gap-4">
         <div class="hidden text-right sm:block">
           <p class="text-sm font-medium text-gray-900">{{ auth.user()?.name }}</p>
-          <p class="text-xs text-gray-500">{{ auth.user()?.role }}</p>
+          <p class="text-xs text-gray-500">
+            {{ auth.user()?.role === 'SUPER_ADMIN' ? 'Super Admin' : auth.user()?.role }}
+          </p>
         </div>
 
         <div
@@ -68,7 +70,6 @@ export class Navbar {
   menuClick = output<void>();
   isLoggingOut = signal(false);
 
-  /** Reads the `title` set on the active route and updates after every navigation. */
   title = toSignal(
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
@@ -90,11 +91,9 @@ export class Navbar {
     );
   });
 
-  /** Calls POST /auth/logout, then clears the session and goes to /login (even if the API fails). */
   onLogout(): void {
     this.isLoggingOut.set(true);
 
-    // The toast (API message) comes from errorInterceptor
     this.auth.logoutFromServer().subscribe({
       error: () => this.isLoggingOut.set(false),
       complete: () => this.isLoggingOut.set(false),

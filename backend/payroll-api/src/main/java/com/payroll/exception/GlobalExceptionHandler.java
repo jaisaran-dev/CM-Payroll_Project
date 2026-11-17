@@ -23,6 +23,27 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND); // 404
     }
 
+    @ExceptionHandler(SelfDeleteNotAllowedException.class)
+    public ResponseEntity<ApiResponse<Object>> handleSelfDeleteNotAllowed(SelfDeleteNotAllowedException ex) {
+        ApiResponse<Object> response = ApiResponse.builder()
+                .success(false)
+                .message(ex.getMessage())
+                .data(null)
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(SelfPayrollPaymentNotAllowedException.class)
+    public ResponseEntity<ApiResponse<Object>> handleSelfPayrollPaymentNotAllowed(
+            SelfPayrollPaymentNotAllowedException ex) {
+        ApiResponse<Object> response = ApiResponse.builder()
+                .success(false)
+                .message(ex.getMessage())
+                .data(null)
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Object>> handleValidation(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult().getFieldErrors().stream()

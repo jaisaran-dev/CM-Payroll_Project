@@ -5,6 +5,7 @@ import com.payroll.dto.employee.EmployeeRequest;
 import com.payroll.dto.employee.EmployeeResponse;
 import com.payroll.service.EmployeeService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -63,8 +64,10 @@ public class EmployeeController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<String>> delete(@PathVariable Long id) {
-        employeeService.softDeleteEmployee(id);
+    public ResponseEntity<ApiResponse<String>> delete(
+            @PathVariable Long id,
+            Authentication authentication) {
+        employeeService.softDeleteEmployee(id, authentication.getName());
         return ResponseEntity.ok(ApiResponse.<String>builder()
                 .success(true).message("Employee Deleted successfully").data(null).build());
     }

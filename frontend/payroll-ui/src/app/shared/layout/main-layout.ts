@@ -1,13 +1,8 @@
-// src/app/shared/layout/main-layout/main-layout.ts
 import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Navbar } from '../components/navbar/navbar';
 import { Sidebar } from '../components/sidebar/sidebar';
 
-/**
- * Shell for every page after login: sidebar + header stay fixed,
- * and the active page (employees, leave, ...) renders inside <router-outlet />.
- */
 @Component({
   selector: 'app-main-layout',
   standalone: true,

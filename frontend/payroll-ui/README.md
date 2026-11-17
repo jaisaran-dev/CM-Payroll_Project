@@ -1,59 +1,231 @@
-# PayrollUi
+# Payroll UI – Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.19.
+The frontend application for the CM Payroll Management System, built using **Angular 21, TypeScript, and Tailwind CSS**.
 
-## Development server
+It provides a responsive interface for managing employees, attendance, leave requests, payroll, and authentication. The application supports separate Admin and Employee workflows with role-based navigation.
 
-To start a local development server, run:
+## Technology Stack
+
+| Technology      | Purpose                          |
+| --------------- | -------------------------------- |
+| Angular 21      | Frontend framework               |
+| TypeScript      | Application development          |
+| Tailwind CSS    | UI styling and responsive design |
+| Angular Signals | Reactive state management        |
+| Reactive Forms  | Form handling and validation     |
+| Angular Router  | Navigation and lazy loading      |
+| HttpClient      | REST API integration             |
+| Vitest          | Unit testing                     |
+
+## Requirements
+
+Make sure the following tools are installed:
+
+- Node.js 20.19+ / 22.12+ / 24+
+- npm 10.8.2
+- Angular CLI 21
+- A running Spring Boot backend API
+
+## Getting Started
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/jaisaran-dev/CM-Payroll_Project.git
+cd CM-Payroll/frontend/payroll-ui
+```
+
+### 2. Install Dependencies
+
+```bash
+npm ci
+```
+
+### 3. Configure API URL
+
+Update the API base URL in:
+
+```text
+src/environments/environment.ts
+```
+
+```typescript
+export const environment = {
+  production: false,
+  apiUrl: 'https://your-production-domain.com/api',
+};
+```
+
+For production, configure the deployed Render API URL.
+
+### 4. Start Development Server
 
 ```bash
 ng serve
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Open the application:
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
+```text
+http://localhost:4200
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Project Architecture
 
-```bash
-ng generate --help
+The application follows a feature-based architecture using Angular standalone components and lazy-loaded routes.
+
+### Folder Structure
+
+```text
+src/app/
+├── core/
+│   ├── guards/
+│   ├── interceptors/
+│   ├── models/
+│   └── services/
+│
+├── features/
+│   ├── auth/
+│   ├── attendance/
+│   ├── employees/
+│   ├── leave/
+│   └── payroll/
+│
+├── shared/
+│   ├── components/
+│   └── layout/
+│
+├── app.config.ts
+├── app.routes.ts
+└── app.ts
 ```
 
-## Building
+### Architecture Responsibilities
 
-To build the project run:
+| Module            | Responsibility                                       |
+| ----------------- | ---------------------------------------------------- |
+| Core Models       | TypeScript interfaces and API data types             |
+| Core Services     | Authentication and API communication                 |
+| Route Guards      | Role-based navigation and route protection           |
+| HTTP Interceptors | JWT attachment, token refresh, and error handling    |
+| Features          | Module-specific pages, forms, and business workflows |
+| Shared Components | Reusable tables, buttons, notifications, and dialogs |
+| Shared Layout     | Common application layout and navigation             |
+
+## Application Modules
+
+### 1. Authentication
+
+- Secure login interface
+- JWT-based authentication
+- Access and refresh token handling
+- Role-based navigation
+- Session management
+
+### 2. Employee Management
+
+- Employee listing
+- Search and filtering
+- Create and update employee records
+- Employee information management
+
+### 3. Attendance Management
+
+- Attendance overview
+- Mark attendance
+- Employee attendance status
+- Attendance history
+
+### 4. Leave Management
+
+- Apply for leave
+- View leave history and status
+- Review leave requests
+- Approve or reject leave applications
+
+### 5. Payroll Management
+
+- Payroll summary
+- Salary calculation details
+- Record employee payments
+- Employee payment history
+
+## User Roles and Navigation
+
+The application provides different access levels based on user roles.
+
+| Feature             | Admin | Super Admin | Employee |
+| ------------------- | :---: | :---------: | :------: |
+| Dashboard           |   ✓   |      ✓      |    ✓     |
+| Employee Management |   ✓   |      ✓      |    —     |
+| Attendance          |   ✓   |      ✓      |    ✓     |
+| Leave Management    |   ✓   |      ✓      |    ✓     |
+| Payroll Management  |   ✓   |      ✓      |    —     |
+| Personal Attendance |   —   |      —      |    ✓     |
+| Leave Application   |   —   |      —      |    ✓     |
+| Payment History     |   ✓   |      ✓      |    -     |
+
+**Note:** Frontend route guards control navigation and improve the user experience. All authentication and authorization permissions must also be validated by the backend API.
+
+## API Integration and Data Flow
+
+The frontend communicates with the Spring Boot backend through REST APIs using Angular HttpClient.
+
+The application follows this request flow:
+
+1. User interacts with a feature component.
+2. Reactive forms and Angular Signals manage input and UI state.
+3. Feature services send HTTP requests to the backend.
+4. HTTP interceptors attach authentication tokens and handle token refresh.
+5. API responses are processed and mapped to TypeScript models.
+6. Components update the UI with the latest data.
+7. Notifications provide feedback for successful operations and errors.
+
+## Authentication and Security
+
+The application uses JWT-based authentication integrated with the Spring Boot backend.
+
+- Access tokens and refresh tokens are currently stored in browser localStorage.
+- HTTP interceptors attach access tokens to authenticated requests.
+- Expired access tokens trigger the configured refresh flow.
+- Route guards restrict navigation based on user roles.
+- Backend APIs remain responsible for enforcing authorization.
+
+**Security Recommendation:** Use HTTPS in production and consider migrating authentication tokens to secure, HttpOnly cookies with corresponding backend support.
+
+## Build and Testing
+
+### Production Build
 
 ```bash
-ng build
+npm run build
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+The production build output is generated inside:
 
-## Running unit tests
+```text
+dist/
+```
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+### Run Unit Tests
 
 ```bash
-ng test
+npm test -- --watch=false
 ```
 
-## Running end-to-end tests
+Unit tests are executed using Vitest through the Angular CLI.
 
-For end-to-end (e2e) testing, run:
+## Deployment
 
-```bash
-ng e2e
-```
+The frontend application is deployed on **Vercel**.
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+| Environment | Platform |
+| ----------- | -------- |
+| Frontend    | Vercel   |
 
-## Additional Resources
+Production deployment requires the correct backend API URL and appropriate CORS configuration on the backend.
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+---
+
+**CM Payroll Management System**
+Frontend developed using Angular 21, TypeScript, and Tailwind CSS.

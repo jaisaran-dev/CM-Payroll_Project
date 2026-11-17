@@ -12,6 +12,7 @@ import {
   untracked,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../../core/services/auth.service';
 import {
   PayrollListItem,
   PayrollPaymentHistoryItem,
@@ -57,6 +58,7 @@ interface PayrollRow {
 })
 export class PayrollList implements OnInit, OnDestroy {
   private readonly payrollService = inject(PayrollService);
+  private readonly auth = inject(AuthService);
   private readonly toast = inject(ToastService);
 
   readonly payrollRows = signal<PayrollRow[]>([]);
@@ -138,7 +140,14 @@ export class PayrollList implements OnInit, OnDestroy {
     this.isLoading.set(true);
     this.payrollService.getCurrentPayroll().subscribe({
       next: (items) => {
-        this.payrollRows.set(items.map((item) => this.toPayrollRow(item)));
+        const currentEmployeeId = this.auth.user()?.employeeId;
+        this.payrollRows.set(
+          items
+            .filter(
+              (item) => currentEmployeeId == null || item.employeeId !== currentEmployeeId,
+            )
+            .map((item) => this.toPayrollRow(item)),
+        );
         this.isLoading.set(false);
       },
       error: (error: HttpErrorResponse) => {
@@ -176,7 +185,7 @@ export class PayrollList implements OnInit, OnDestroy {
   }
 
   openRecordPayment(row: PayrollRow): void {
-    if (row.balance <= 0) return;
+    if (row.balance <= 0 || row.employeeId === this.auth.user()?.employeeId) return;
     this.paymentDraftAmount = row.balance;
     this.paymentFormError.set(null);
     this.viewingPayment.set(null);

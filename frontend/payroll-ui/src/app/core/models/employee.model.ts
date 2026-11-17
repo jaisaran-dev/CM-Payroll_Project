@@ -1,6 +1,6 @@
 export type SalaryType = 'MONTHLY' | 'DAILY';
 export type WorkMode = 'WFH' | 'OFFICE' | 'ON_SITE';
-export type SystemRole = 'ADMIN' | 'MANAGER' | 'EMPLOYEE';
+export type SystemRole = 'SUPER_ADMIN' | 'ADMIN' | 'EMPLOYEE';
 
 export interface Employee {
   id: number;
@@ -10,11 +10,9 @@ export interface Employee {
   salaryAmount: number;
   workMode?: WorkMode;
   email?: string;
-  password?: string | null; // <-- add this
   systemRole?: SystemRole;
 }
 
-// Raw API response
 export interface EmployeeApiResponse {
   success: boolean;
   message: string;
@@ -27,7 +25,6 @@ export interface EmployeeApiResponse {
     workMode?: string;
     isActive?: boolean;
     email?: string;
-    password?: string;
     systemRole?: string;
   }[];
 }

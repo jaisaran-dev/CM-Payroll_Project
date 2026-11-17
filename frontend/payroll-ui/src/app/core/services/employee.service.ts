@@ -22,8 +22,9 @@ export interface CreateEmployeePayload {
   systemRole: SystemRole;
 }
 
-// Update payload might not include password if not changing it, but we allow it here
-export type UpdateEmployeePayload = CreateEmployeePayload;
+export type UpdateEmployeePayload = Omit<CreateEmployeePayload, 'password'> & {
+  password?: string;
+};
 
 @Injectable({ providedIn: 'root' })
 export class EmployeeService {
@@ -49,7 +50,6 @@ export class EmployeeService {
             salaryAmount: item.salaryAmount,
             workMode: item.workMode as WorkMode,
             email: item.email,
-            password: item.password,
             systemRole: item.systemRole as SystemRole,
           }));
       }),

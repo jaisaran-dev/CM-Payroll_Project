@@ -8,7 +8,6 @@ export interface DailyAttendance {
   remarks: string;
 }
 
-// Standard API Response wrapper
 export interface ApiResponse<T> {
   success: boolean;
   message: string;

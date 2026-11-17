@@ -11,25 +11,23 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
 
+    private static final String SUPER_ADMIN_EMAIL = "superadmin@payroll.com";
+
     private final UserRepository userRepository;
 
     @Override
-    public void run(String... args) throws Exception {
-        User admin = userRepository.findByEmail("admin@payroll.com").orElse(null);
-
-        if (admin == null) {
-            admin = User.builder()
-                    .email("admin@payroll.com")
-                    .systemRole(SystemRole.ADMIN)
-                    .enabled(true)
-                    .mustChangePassword(false)
-                    .build();
+    public void run(String... args) {
+        User superAdmin = userRepository.findByEmail(SUPER_ADMIN_EMAIL).orElse(null);
+        if (superAdmin == null) {
+            if (userRepository.count() == 0) {
+                System.out.println("No users found. Insert the super admin using the SQL script.");
+            }
+            return;
         }
 
-        admin.setPasswordHash("admin123");
-
-        userRepository.save(admin);
-
-        System.out.println("✅ ADMIN ACCOUNT RESET TO PLAIN TEXT: admin@payroll.com / admin123");
+        if (superAdmin.getSystemRole() != SystemRole.SUPER_ADMIN) {
+            superAdmin.setSystemRole(SystemRole.SUPER_ADMIN);
+            userRepository.save(superAdmin);
+        }
     }
 }

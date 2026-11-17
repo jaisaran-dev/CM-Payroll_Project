@@ -11,6 +11,7 @@ import com.payroll.enums.AttendanceStatus;
 import com.payroll.enums.SalaryType;
 import com.payroll.enums.SystemRole;
 import com.payroll.enums.WorkMode;
+import com.payroll.exception.SelfPayrollPaymentNotAllowedException;
 import com.payroll.repository.AttendanceRepository;
 import com.payroll.repository.EmployeeRepository;
 import com.payroll.repository.PayrollPaymentRepository;
@@ -28,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -52,14 +54,75 @@ class PayrollServiceTest {
                         attendance(employee, LocalDate.of(2026, 11, 10)),
                         attendance(employee, today)));
         when(paymentRepository.findByPayrollMonthAndPayrollYear(11, 2026)).thenReturn(List.of());
+        when(userRepository.findByEmail("admin@example.com"))
+                .thenReturn(Optional.of(adminUser()));
         when(userRepository.findByEmployeeIdIn(List.of(1L))).thenReturn(List.of());
 
-        List<PayrollListResponse> payroll = service.getCurrentPayrollList(today);
+        List<PayrollListResponse> payroll = service.getCurrentPayrollList(today, "admin@example.com");
 
         assertEquals(1, payroll.size());
         assertEquals(2, payroll.getFirst().getTotalDays());
         assertEquals(new BigDecimal("2000.00"), payroll.getFirst().getPayableAmount());
         assertEquals(new BigDecimal("2000.00"), payroll.getFirst().getBalance());
+    }
+
+    @Test
+    void currentPayrollExcludesTheLoggedInAdminsOwnEmployee() {
+        EmployeeRepository employeeRepository = mock(EmployeeRepository.class);
+        AttendanceRepository attendanceRepository = mock(AttendanceRepository.class);
+        PayrollPaymentRepository paymentRepository = mock(PayrollPaymentRepository.class);
+        UserRepository userRepository = mock(UserRepository.class);
+        PayrollService service = new PayrollService(
+                employeeRepository, attendanceRepository, paymentRepository, userRepository);
+        LocalDate today = LocalDate.of(2026, 11, 17);
+        Employee adminEmployee = employee(1L, LocalDate.of(2026, 11, 10));
+        Employee otherEmployee = employee(2L, LocalDate.of(2026, 11, 10));
+        User admin = User.builder()
+                .email("admin@example.com")
+                .systemRole(SystemRole.ADMIN)
+                .employee(adminEmployee)
+                .build();
+
+        when(userRepository.findByEmail("admin@example.com")).thenReturn(Optional.of(admin));
+        when(employeeRepository.findByIsActiveTrue()).thenReturn(List.of(adminEmployee, otherEmployee));
+        when(attendanceRepository.findByEmployeeIdsAndDateRangeAndStatus(
+                List.of(2L), LocalDate.of(2026, 11, 1), today, AttendanceStatus.PRESENT))
+                .thenReturn(List.of());
+        when(paymentRepository.findByPayrollMonthAndPayrollYear(11, 2026)).thenReturn(List.of());
+        when(userRepository.findByEmployeeIdIn(List.of(2L))).thenReturn(List.of());
+
+        List<PayrollListResponse> payroll = service.getCurrentPayrollList(today, "admin@example.com");
+
+        assertEquals(1, payroll.size());
+        assertEquals(2L, payroll.getFirst().getEmployeeId());
+    }
+
+    @Test
+    void recordPaymentRejectsTheLoggedInAdminsOwnEmployee() {
+        EmployeeRepository employeeRepository = mock(EmployeeRepository.class);
+        AttendanceRepository attendanceRepository = mock(AttendanceRepository.class);
+        PayrollPaymentRepository paymentRepository = mock(PayrollPaymentRepository.class);
+        UserRepository userRepository = mock(UserRepository.class);
+        PayrollService service = new PayrollService(
+                employeeRepository, attendanceRepository, paymentRepository, userRepository);
+        Employee adminEmployee = employee(1L, LocalDate.of(2026, 11, 10));
+        User admin = User.builder()
+                .email("admin@example.com")
+                .systemRole(SystemRole.ADMIN)
+                .employee(adminEmployee)
+                .build();
+        PayrollPaymentRequest request = new PayrollPaymentRequest();
+        request.setEmployeeId(1L);
+        request.setAmount(new BigDecimal("500.00"));
+        when(userRepository.findByEmail("admin@example.com")).thenReturn(Optional.of(admin));
+
+        assertThrows(
+                SelfPayrollPaymentNotAllowedException.class,
+                () -> service.recordCurrentPayrollPayment(
+                        request, LocalDateTime.of(2026, 11, 17, 14, 30), "admin@example.com"));
+
+        verify(employeeRepository, never()).findActiveByIdForUpdate(1L);
+        verify(paymentRepository, never()).save(any());
     }
 
     @Test

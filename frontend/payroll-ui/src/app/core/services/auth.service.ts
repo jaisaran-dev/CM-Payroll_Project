@@ -23,25 +23,26 @@ export class AuthService {
 
   private _user = signal<AuthUser | null>(this.readStoredUser());
 
-  /** One in-flight refresh call shared by all callers */
   private refresh$: Observable<string> | null = null;
 
   readonly user = this._user.asReadonly();
   readonly isLoggedIn = computed(() => !!this._user() && !!this.getToken());
 
-  readonly isAdmin = computed(() => this._user()?.role === 'ADMIN');
-  readonly isEmployee = computed(
-    () => this._user()?.role === 'EMPLOYEE' || this._user()?.role === 'MANAGER',
+  readonly isAdmin = computed(
+    () => this._user()?.role === 'ADMIN' || this._user()?.role === 'SUPER_ADMIN',
   );
+  readonly isEmployee = computed(() => this._user()?.role === 'EMPLOYEE');
 
   login(credentials: LoginRequest): Observable<LoginResponseData> {
     return this.api.post<LoginResponseData>('/auth/login', credentials).pipe(
       tap((res) => {
         localStorage.setItem(TOKEN_KEY, res.token);
         localStorage.setItem(REFRESH_TOKEN_KEY, res.refreshToken);
-
-        // Fallback to extracting a name from the email if backend doesn't send 'name'
-        const displayName = res.name || credentials.email.split('@')[0].replace('.', ' ');
+        const fallbackName =
+          res.role === 'SUPER_ADMIN'
+            ? 'Super Admin'
+            : credentials.email.split('@')[0].replace('.', ' ');
+        const displayName = res.name?.trim() || fallbackName;
 
         const user: AuthUser = {
           email: credentials.email,
@@ -72,7 +73,6 @@ export class AuthService {
         .post<RefreshTokenResponseData>('/auth/refresh', { refreshToken: currentRefreshToken })
         .pipe(
           map((res: any) => {
-            // Works whether ApiService unwraps `.data` or not
             const payload = res?.data ?? res;
             const newAccess: string | undefined = payload?.accessToken ?? payload?.token;
             const newRefresh: string = payload?.refreshToken ?? currentRefreshToken;

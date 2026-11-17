@@ -13,7 +13,6 @@ export interface MarkAttendancePayload {
   remarks: string;
 }
 
-// NEW: Payload for employee (no ID or Date needed)
 export interface EmployeeMarkPayload {
   status: 'PRESENT' | 'ABSENT';
   remarks: string;

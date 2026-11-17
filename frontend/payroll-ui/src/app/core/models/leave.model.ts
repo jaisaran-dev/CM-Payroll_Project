@@ -3,10 +3,10 @@ export type LeaveType = 'Full Day' | 'Half Day';
 export type HalfDaySession = 'Morning Half' | 'Afternoon Half';
 
 export interface LeaveRequest {
-  id: string; // e.g. LV-001 (Formatted for UI)
-  numericId: number; // Original ID from DB
-  employeeId?: number; // NEW: For Admin view
-  employeeName?: string; // NEW: For Admin view
+  id: string;
+  numericId: number;
+  employeeId?: number;
+  employeeName?: string;
   leaveType: LeaveType;
   halfDaySession?: HalfDaySession;
   startDate: string;

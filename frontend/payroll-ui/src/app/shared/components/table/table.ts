@@ -1,18 +1,6 @@
 // src/app/shared/components/table/table.ts
 import { Directive } from '@angular/core';
 
-/**
- * Table building blocks (Angular version of the Table / TableHeader / TableBody / ... primitives).
- * Each one is an attribute directive that adds the base styles to a native table element:
- *
- *   <table appTable>
- *     <thead appTableHeader><tr appTableRow><th appTableHead>Name</th></tr></thead>
- *     <tbody appTableBody><tr appTableRow><td appTableCell>Priya</td></tr></tbody>
- *   </table>
- *
- * Extra classes you add on the element are kept: <td appTableCell class="text-right">
- */
-
 @Directive({
   selector: 'table[appTable]',
   standalone: true,

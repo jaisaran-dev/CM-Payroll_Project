@@ -33,8 +33,10 @@ public class PayrollController {
 
     @GetMapping("/admin/list")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<List<PayrollListResponse>>> getCurrentPayrollList() {
-        List<PayrollListResponse> data = payrollService.getCurrentPayrollList(LocalDate.now());
+    public ResponseEntity<ApiResponse<List<PayrollListResponse>>> getCurrentPayrollList(
+            Authentication authentication) {
+        List<PayrollListResponse> data = payrollService.getCurrentPayrollList(
+                LocalDate.now(), authentication.getName());
         return ResponseEntity.ok(ApiResponse.<List<PayrollListResponse>>builder()
                 .success(true)
                 .message("Current month payroll list fetched successfully")

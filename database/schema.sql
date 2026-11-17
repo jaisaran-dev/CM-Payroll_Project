@@ -1,16 +1,15 @@
-
 CREATE DATABASE IF NOT EXISTS payroll_db;
 
 USE payroll_db;
 
 -- 1. EMPLOYEES
-
 CREATE TABLE employees (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(100) NOT NULL,
     work_mode VARCHAR(20) NOT NULL,
     salary_type VARCHAR(20) NOT NULL,
     salary_amount DECIMAL(12,2) NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
         ON UPDATE CURRENT_TIMESTAMP,
@@ -26,7 +25,6 @@ CREATE TABLE employees (
 );
 
 -- 2. USERS
-
 CREATE TABLE users (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     email VARCHAR(150) NOT NULL UNIQUE,
@@ -38,7 +36,7 @@ CREATE TABLE users (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT chk_system_role
-        CHECK (system_role IN ('ADMIN', 'EMPLOYEE')),
+        CHECK (system_role IN ('ADMIN', 'SUPER_ADMIN', 'EMPLOYEE')),
 
     CONSTRAINT fk_user_employee
         FOREIGN KEY (employee_id)
@@ -47,14 +45,13 @@ CREATE TABLE users (
 
     CONSTRAINT chk_user_employee_link
         CHECK (
-            (system_role = 'ADMIN' AND employee_id IS NULL)
+            (system_role IN ('ADMIN', 'SUPER_ADMIN'))
             OR
             (system_role = 'EMPLOYEE' AND employee_id IS NOT NULL)
         )
 );
 
 -- 3. ATTENDANCE
-
 CREATE TABLE attendance (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     employee_id BIGINT NOT NULL,
@@ -78,7 +75,6 @@ CREATE TABLE attendance (
 );
 
 -- 4. PAYROLL PAYMENT TRANSACTIONS
-
 CREATE TABLE payroll_payments (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     employee_id BIGINT NOT NULL,
@@ -114,7 +110,6 @@ CREATE TABLE payroll_payments (
 );
 
 -- 5. LEAVES
-
 CREATE TABLE leaves (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     employee_id BIGINT NOT NULL,
@@ -137,4 +132,41 @@ CREATE TABLE leaves (
         ON DELETE RESTRICT,
 
     INDEX idx_leave_employee (employee_id)
+);
+
+-- 6. LOGIN ACTIVITY
+CREATE TABLE login_activity (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    login_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ip_address VARCHAR(255) NULL,
+    user_agent VARCHAR(255) NULL,
+    status VARCHAR(20) NOT NULL,
+
+    CONSTRAINT fk_login_activity_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE RESTRICT,
+
+    INDEX idx_login_activity_user_id (user_id)
+);
+
+-- 7. REFRESH TOKENS
+CREATE TABLE refresh_tokens (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    token_hash VARCHAR(255) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    revoked TINYINT(1) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT uk_refresh_tokens_token_hash UNIQUE (token_hash),
+
+    CONSTRAINT fk_refresh_tokens_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE,
+
+    INDEX idx_refresh_tokens_user_id (user_id)
 );

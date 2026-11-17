@@ -20,8 +20,6 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
     mergeMap((event: HttpEvent<unknown>) => {
       if (event instanceof HttpResponse) {
         const body = event.body as ApiBody | null;
-
-        // { success: false } replies (even with HTTP 200) become errors
         if (body?.success === false) {
           return throwError(
             () =>
@@ -33,7 +31,6 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
           );
         }
 
-        // Success toast with the API's message
         if (
           req.method !== 'GET' &&
           !req.url.includes('/auth/refresh') &&
@@ -54,8 +51,6 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       const isUnauthorized = err.status === 401 && !isLoginCall;
       const isForbidden = err.status === 403 && !isLoginCall;
 
-      // Do not toast here for 401/403 or a failed refresh call:
-      // authInterceptor handles refresh, retry, logout and the permission toast.
       if (isUnauthorized || isForbidden || isRefreshCall) {
         return throwError(() => err);
       }

@@ -38,7 +38,7 @@ public class AttendanceController {
     // 2. EMPLOYEE ENDPOINT: Mark self (Today only)
     // ==========================================
     @PostMapping("/employee/mark")
-    @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER')")
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public ResponseEntity<ApiResponse<AttendanceResponse>> markByEmployee(
             @RequestBody EmployeeAttendanceRequest request,
             Authentication authentication) {
@@ -59,9 +59,11 @@ public class AttendanceController {
     @GetMapping("/admin/list")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<List<AdminAttendanceListResponse>>> getDailyList(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            Authentication authentication) {
 
-        List<AdminAttendanceListResponse> data = attendanceService.getDailyAttendanceList(date);
+        List<AdminAttendanceListResponse> data = attendanceService.getDailyAttendanceList(
+                date, authentication.getName());
 
         return ResponseEntity.ok(ApiResponse.<List<AdminAttendanceListResponse>>builder()
                 .success(true)
@@ -87,7 +89,7 @@ public class AttendanceController {
     // EMPLOYEE ENDPOINT: Get today's status
     // ==========================================
     @GetMapping("/employee/today")
-    @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER')")
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public ResponseEntity<ApiResponse<AttendanceResponse>> getTodayAttendance(Authentication authentication) {
         AttendanceResponse data = attendanceService.getTodayAttendanceForEmployee(authentication.getName());
         return ResponseEntity.ok(ApiResponse.<AttendanceResponse>builder()

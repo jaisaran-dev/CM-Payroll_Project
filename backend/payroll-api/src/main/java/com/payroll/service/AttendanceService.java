@@ -97,13 +97,22 @@ public class AttendanceService {
         return mapToResponse(saved);
     }
 
-    public List<AdminAttendanceListResponse> getDailyAttendanceList(LocalDate date) {
+    public List<AdminAttendanceListResponse> getDailyAttendanceList(
+            LocalDate date, String loggedInEmail) {
         if (date.isAfter(LocalDate.now())) {
             throw new RuntimeException("Cannot fetch attendance for future dates.");
         }
 
+        User currentUser = userRepository.findByEmail(loggedInEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        Long currentEmployeeId = currentUser.getEmployee() != null
+                ? currentUser.getEmployee().getId()
+                : null;
         List<Employee> activeEmployees = employeeRepository.findByIsActiveTrueAndCreatedAtLessThan(
-                date.plusDays(1).atStartOfDay());
+                        date.plusDays(1).atStartOfDay()).stream()
+                .filter(employee -> currentEmployeeId == null
+                        || !currentEmployeeId.equals(employee.getId()))
+                .toList();
         List<Attendance> attendanceRecords = attendanceRepository.findByAttendanceDate(date);
 
         Map<Long, Attendance> attendanceMap = attendanceRecords.stream()

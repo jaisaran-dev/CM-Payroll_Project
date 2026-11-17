@@ -35,12 +35,15 @@ public class AuthService {
         }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            // Track failed login attempt
             saveLoginActivity(user, httpRequest, "FAILED");
             throw new BadCredentialsException("Invalid email or password");
         }
 
-        // Track successful login
+        if (passwordEncoder.upgradeEncoding(user.getPasswordHash())) {
+            user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+            userRepository.save(user);
+        }
+
         saveLoginActivity(user, httpRequest, "SUCCESS");
 
         String accessToken = jwtService.generateAccessToken(user.getEmail(), user.getSystemRole().name());
@@ -51,6 +54,7 @@ public class AuthService {
                 .refreshToken(refreshToken)
                 .role(user.getSystemRole().name())
                 .employeeId(user.getEmployee() != null ? user.getEmployee().getId() : null)
+                .name(user.getEmployee() != null ? user.getEmployee().getName() : null)
                 .build();
     }
 

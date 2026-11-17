@@ -65,7 +65,9 @@ export class Login {
         // The success and error toasts (API message) come from errorInterceptor
         next: (res) => {
           // Admin lands on employees, employee lands on attendance
-          this.router.navigate([res.role === 'ADMIN' ? '/employees' : '/attendance']);
+          this.router.navigate([
+            res.role === 'ADMIN' || res.role === 'SUPER_ADMIN' ? '/employees' : '/attendance',
+          ]);
         },
         error: () => {},
       });

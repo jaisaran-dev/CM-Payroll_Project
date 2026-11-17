@@ -13,12 +13,12 @@
   [canView]="false"
   [canEdit]="true"
   [canDelete]="true"
+  [canDeleteRow]="canDeleteEmployee"
   (add)="onAdd()"
   (viewRow)="onView($event)"
   (editRow)="onEdit($event)"
   (deleteRow)="onDelete($event)"
 >
-  <!-- Name column: avatar + name + email -->
   <ng-template appCell="name" let-row>
     <div class="flex items-center gap-3">
       <span
@@ -33,7 +33,6 @@
     </div>
   </ng-template>
 
-  <!-- Salary column: formatted as currency -->
   <ng-template appCell="salaryAmount" let-row>
     {{ row.salaryAmount | currency: 'INR' }}
   </ng-template>
@@ -42,7 +41,7 @@
 @if (isFormOpen()) {
   <app-employee-form
     [employee]="editingEmployee()"
-    (saved)="onSaved($event)"
+    (saved)="onSaved()"
     (closed)="closeForm()"
   />
 }

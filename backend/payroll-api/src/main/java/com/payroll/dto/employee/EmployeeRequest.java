@@ -16,5 +16,5 @@ public class EmployeeRequest {
     // Login Access Fields
     private String email;
     private String password;
-    private SystemRole systemRole; // ADMIN, MANAGER, EMPLOYEE
+    private SystemRole systemRole; // ADMIN, SUPER_ADMIN, EMPLOYEE
 }

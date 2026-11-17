@@ -1,4 +1,3 @@
-// src/app/shared/components/icon/icon.ts
 import { Component, computed, input } from '@angular/core';
 
 export type IconName =
@@ -18,7 +17,6 @@ export type IconName =
   | 'pencil'
   | 'trash';
 
-/** Each icon is a list of SVG path strings on a 24x24 grid. */
 const ICONS: Record<IconName, string[]> = {
   search: ['M3 11a8 8 0 1 0 16 0 8 8 0 1 0-16 0', 'm21 21-4.3-4.3'],
   plus: ['M5 12h14', 'M12 5v14'],
@@ -53,7 +51,6 @@ const ICONS: Record<IconName, string[]> = {
   ],
 };
 
-/** Usage: <app-icon name="search" class="h-4 w-4" /> */
 @Component({
   selector: 'app-icon',
   standalone: true,

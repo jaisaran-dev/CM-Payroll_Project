@@ -6,9 +6,11 @@ import com.payroll.entity.Employee;
 import com.payroll.entity.User;
 import com.payroll.enums.SystemRole;
 import com.payroll.exception.ResourceNotFoundException;
+import com.payroll.exception.SelfDeleteNotAllowedException;
 import com.payroll.repository.EmployeeRepository;
 import com.payroll.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,10 +23,14 @@ public class EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public EmployeeResponse createEmployee(EmployeeRequest request) {
-        // Name check removed. Only checking email.
+        if (request.getSystemRole() == SystemRole.SUPER_ADMIN) {
+            throw new IllegalArgumentException("Super Admin access can only be assigned directly in the database.");
+        }
+
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new RuntimeException("Email is already in use!");
         }
@@ -40,7 +46,7 @@ public class EmployeeService {
 
         User user = User.builder()
                 .email(request.getEmail())
-                .passwordHash(request.getPassword()) // Plain text as requested
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .systemRole(request.getSystemRole() != null ? request.getSystemRole() : SystemRole.EMPLOYEE)
                 .employee(savedEmployee)
                 .enabled(true)
@@ -80,22 +86,24 @@ public class EmployeeService {
         if (!user.getEmail().equals(request.getEmail()) && userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new RuntimeException("Email is already in use by another user!");
         }
+        if (request.getSystemRole() == SystemRole.SUPER_ADMIN
+                && user.getSystemRole() != SystemRole.SUPER_ADMIN) {
+            throw new IllegalArgumentException(
+                    "Super Admin access can only be assigned directly in the database.");
+        }
 
-        // Update Employee Table Fields
         employee.setName(request.getName());
         employee.setWorkMode(request.getWorkMode());
         employee.setSalaryType(request.getSalaryType());
         employee.setSalaryAmount(request.getSalaryAmount());
 
-        // Update User Table Fields
         user.setEmail(request.getEmail());
         if (request.getSystemRole() != null) {
             user.setSystemRole(request.getSystemRole());
         }
 
-        // Update Password ONLY if a new one was typed
         if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
-            user.setPasswordHash(request.getPassword());
+            user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         }
 
         Employee updatedEmp = employeeRepository.save(employee);
@@ -105,9 +113,15 @@ public class EmployeeService {
     }
 
     @Transactional
-    public void softDeleteEmployee(Long id) {
+    public void softDeleteEmployee(Long id, String currentUserEmail) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
+
+        User currentUser = userRepository.findByEmail(currentUserEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        if (currentUser.getEmployee() != null && id.equals(currentUser.getEmployee().getId())) {
+            throw new SelfDeleteNotAllowedException("You cannot delete your own employee profile.");
+        }
 
         employee.setIsActive(false);
         employeeRepository.save(employee);
@@ -126,7 +140,6 @@ public class EmployeeService {
                 .salaryType(employee.getSalaryType() != null ? employee.getSalaryType().name() : null)
                 .salaryAmount(employee.getSalaryAmount())
                 .email(user != null ? user.getEmail() : null)
-                .password(user != null ? user.getPasswordHash() : null)
                 .systemRole(user != null && user.getSystemRole() != null ? user.getSystemRole().name() : null)
                 .isActive(employee.getIsActive())
                 .build();

@@ -12,9 +12,7 @@ public class EmployeeResponse {
     private String salaryType;
     private BigDecimal salaryAmount;
 
-    // Login Info
     private String email;
-    private String password; // Returning plain text password
     private String systemRole;
     private Boolean isActive;
 }

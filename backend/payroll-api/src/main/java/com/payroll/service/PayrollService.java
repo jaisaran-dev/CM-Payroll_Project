@@ -11,6 +11,7 @@ import com.payroll.enums.AttendanceStatus;
 import com.payroll.enums.SalaryType;
 import com.payroll.enums.SystemRole;
 import com.payroll.exception.ResourceNotFoundException;
+import com.payroll.exception.SelfPayrollPaymentNotAllowedException;
 import com.payroll.repository.AttendanceRepository;
 import com.payroll.repository.EmployeeRepository;
 import com.payroll.repository.PayrollPaymentRepository;
@@ -39,8 +40,13 @@ public class PayrollService {
     private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
-    public List<PayrollListResponse> getCurrentPayrollList(LocalDate today) {
-        List<Employee> employees = employeeRepository.findByIsActiveTrue();
+    public List<PayrollListResponse> getCurrentPayrollList(LocalDate today, String adminEmail) {
+        User admin = userRepository.findByEmail(adminEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("Admin account not found"));
+        Long adminEmployeeId = admin.getEmployee() != null ? admin.getEmployee().getId() : null;
+        List<Employee> employees = employeeRepository.findByIsActiveTrue().stream()
+                .filter(employee -> !Objects.equals(employee.getId(), adminEmployeeId))
+                .toList();
         if (employees.isEmpty()) {
             return List.of();
         }
@@ -101,8 +107,13 @@ public class PayrollService {
         }
         User admin = userRepository.findByEmail(adminEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("Admin account not found"));
-        if (admin.getSystemRole() != SystemRole.ADMIN) {
+        if (!admin.getSystemRole().hasAdminAccess()) {
             throw new IllegalArgumentException("Only an admin can record payroll payments.");
+        }
+        if (admin.getEmployee() != null
+                && Objects.equals(admin.getEmployee().getId(), request.getEmployeeId())) {
+            throw new SelfPayrollPaymentNotAllowedException(
+                    "You cannot record a payroll payment for your own employee profile.");
         }
 
         LocalDate today = paidAt.toLocalDate();

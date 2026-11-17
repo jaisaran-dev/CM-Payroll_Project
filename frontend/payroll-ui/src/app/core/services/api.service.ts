@@ -7,11 +7,6 @@ import { ApiResponse } from '../models/api-response.model';
 
 type QueryParams = Record<string, string | number | boolean | undefined | null>;
 
-/**
- * Thin wrapper over HttpClient. Every feature service uses this.
- * The backend wraps every reply as { data, message, success, timestamp },
- * so each method unwraps `data` and callers receive just the payload.
- */
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private http = inject(HttpClient);
@@ -45,7 +40,6 @@ export class ApiService {
     return this.http.delete<ApiResponse<T>>(`${this.baseUrl}${path}`).pipe(map((res) => res.data));
   }
 
-  /** Skips undefined/null values so they don't become "undefined" in the URL. */
   private toParams(params?: QueryParams): HttpParams {
     let httpParams = new HttpParams();
     if (!params) return httpParams;

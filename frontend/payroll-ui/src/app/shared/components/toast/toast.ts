@@ -8,7 +8,7 @@ import { ToastService } from '../../../core/services/toast.service';
   imports: [CommonModule],
   template: `
     <div
-      class="fixed z-50 top-4 right-4 left-4 sm:left-auto sm:w-96 flex flex-col gap-3 pointer-events-none"
+      class="fixed z-70 top-4 right-4 left-4 sm:left-auto sm:w-96 flex flex-col gap-3 pointer-events-none"
       aria-live="polite"
     >
       <div

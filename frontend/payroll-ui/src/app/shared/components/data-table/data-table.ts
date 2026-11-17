@@ -1,4 +1,3 @@
-// src/app/shared/components/data-table/data-table.ts
 import { NgTemplateOutlet } from '@angular/common';
 import {
   Component,
@@ -25,11 +24,10 @@ export interface DataTableColumn<T> {
   key: string;
   header: string;
   accessor?: (row: T) => string | number | null | undefined;
-  /** Value used when sorting. Defaults to row[key]. */
   sortValue?: (row: T) => string | number;
   sortable?: boolean;
-  className?: string; // extra classes for the header cell
-  cellClassName?: string; // extra classes for body cells
+  className?: string;
+  cellClassName?: string;
 }
 
 export interface FilterOption {
@@ -44,10 +42,6 @@ export interface FilterConfig {
   defaultValue?: string[];
 }
 
-/**
- * Custom cell content for one column:
- *   <ng-template appCell="name" let-row> ...{{ row.name }}... </ng-template>
- */
 @Directive({ selector: 'ng-template[appCell]', standalone: true })
 export class DataTableCell {
   name = input.required<string>({ alias: 'appCell' });
@@ -80,6 +74,7 @@ export class DataTable<T> {
   canView = input(false);
   canEdit = input(false);
   canDelete = input(false);
+  canDeleteRow = input<(row: T) => boolean>(() => true);
 
   enableSearch = input(true);
   enableFilter = input(true);
@@ -120,6 +115,12 @@ export class DataTable<T> {
 
   visibleColumns = computed(() => this.columns().filter((c) => !this.hiddenCols().has(c.key)));
 
+  hasSearchableFields = computed(
+    () =>
+      this.searchKeys().length > 0 ||
+      this.visibleColumns().some((column) => column.key !== 'actions'),
+  );
+
   colSpan = computed(
     () =>
       this.visibleColumns().length + (this.selectable() ? 1 : 0) + (this.hasRowActions() ? 1 : 0),
@@ -130,13 +131,16 @@ export class DataTable<T> {
 
     const q = this.search().trim().toLowerCase();
     const keys = this.searchKeys();
-    if (q && keys.length > 0) {
-      result = result.filter((row) =>
-        keys.some((k) =>
-          String(this.field(row, k) ?? '')
-            .toLowerCase()
-            .includes(q),
-        ),
+    const searchableColumns = this.visibleColumns().filter((column) => column.key !== 'actions');
+    if (q && this.hasSearchableFields()) {
+      result = result.filter(
+        (row) =>
+          keys.some((key) => this.matchesSearchValue(this.field(row, key), q)) ||
+          searchableColumns.some((column) =>
+            [column.accessor?.(row), column.sortValue?.(row), this.field(row, column.key)].some(
+              (value) => this.matchesSearchValue(value, q),
+            ),
+          ),
       );
     }
 
@@ -229,6 +233,12 @@ export class DataTable<T> {
   // ---- Template helpers ----
   cellValue(col: DataTableColumn<T>, row: T): unknown {
     return col.accessor ? col.accessor(row) : this.field(row, col.key);
+  }
+
+  private matchesSearchValue(value: unknown, query: string): boolean {
+    return String(value ?? '')
+      .toLowerCase()
+      .includes(query);
   }
 
   rowKey(row: T): RowKey {

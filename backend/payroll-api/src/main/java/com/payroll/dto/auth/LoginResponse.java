@@ -10,4 +10,5 @@ public class LoginResponse {
     private String refreshToken; // Refresh Token
     private String role;
     private Long employeeId;
+    private String name;
 }

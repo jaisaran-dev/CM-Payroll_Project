@@ -8,7 +8,6 @@
     aria-modal="true"
     [attr.aria-label]="isEdit ? 'Edit Employee' : 'Add Employee'"
   >
-    <!-- Header -->
     <div class="flex items-center justify-between border-b border-gray-100 px-6 py-4">
       <div>
         <h2 class="text-lg font-semibold text-gray-900">
@@ -26,13 +25,11 @@
       </button>
     </div>
 
-    <!-- Body -->
     <form
       [formGroup]="form"
       (ngSubmit)="onSubmit()"
       class="flex flex-col gap-4 overflow-y-auto px-6 py-5"
     >
-      <!-- Name -->
       <div>
         <label for="employee-name" class="mb-1.5 block text-sm font-medium text-gray-700">
           Name <span class="text-red-500">*</span>
@@ -56,7 +53,6 @@
         }
       </div>
 
-      <!-- Email -->
       <div>
         <label for="employee-email" class="mb-1.5 block text-sm font-medium text-gray-700">
           Email <span class="text-red-500">*</span>
@@ -80,7 +76,6 @@
         }
       </div>
 
-      <!-- Password -->
       <div>
         <label for="employee-password" class="mb-1.5 block text-sm font-medium text-gray-700">
           Password @if (!isEdit) {
@@ -118,7 +113,6 @@
         }
       </div>
 
-      <!-- Salary Type + Salary Amount -->
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label class="mb-1.5 block text-sm font-medium text-gray-700">
@@ -180,7 +174,6 @@
         </div>
       </div>
 
-      <!-- Work Mode -->
       <div>
         <label class="mb-1.5 block text-sm font-medium text-gray-700">
           Work Mode <span class="text-red-500">*</span>
@@ -198,7 +191,6 @@
         }
       </div>
 
-      <!-- Access Level (System Role) -->
       <div>
         <label class="mb-1.5 block text-sm font-medium text-gray-700">
           Access Level <span class="text-red-500">*</span>
@@ -223,7 +215,6 @@
         </div>
       </div>
 
-      <!-- Footer -->
       <div class="mt-2 flex items-center justify-end gap-2 border-t border-gray-100 pt-4">
         <button
           type="button"

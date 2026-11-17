@@ -20,6 +20,7 @@ import {
 } from '../../../core/services/attendance.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { workModeLabel } from '../../../core/utils/display-labels';
 import {
   DataTable,
   DataTableCell,
@@ -39,16 +40,13 @@ export class AttendanceList implements OnInit, OnDestroy {
   private readonly toast = inject(ToastService);
   private readonly auth = inject(AuthService);
 
-  // Reference to the table so we can reset its internal checkbox state
   @ViewChild(DataTable) table?: DataTable<DailyAttendance>;
 
-  // Role check
   isAdmin = false;
 
   readonly todayDate = new Date().toISOString().split('T')[0];
   selectedDate = signal<string>(this.todayDate);
 
-  // --- Admin State ---
   attendanceList = signal<DailyAttendance[]>([]);
   isLoading = signal(false);
   isMarking = signal<number | null>(null);
@@ -57,7 +55,12 @@ export class AttendanceList implements OnInit, OnDestroy {
 
   columns: DataTableColumn<DailyAttendance>[] = [
     { key: 'name', header: 'Employee Name', sortValue: (e) => e.name },
-    { key: 'role', header: 'Role', sortValue: (e) => e.role },
+    {
+      key: 'role',
+      header: 'Role',
+      accessor: (attendance) => workModeLabel(attendance.role),
+      sortValue: (attendance) => attendance.role,
+    },
     { key: 'status', header: 'Status', sortValue: (e) => e.status },
     { key: 'remarks', header: 'Remarks', sortValue: (e) => e.remarks },
     {
@@ -82,7 +85,6 @@ export class AttendanceList implements OnInit, OnDestroy {
 
   rowKey = (e: DailyAttendance) => e.employeeId;
 
-  // --- Summary counts (source of truth) ---
   readonly totalCount = computed(() => this.attendanceList().length);
   readonly presentCount = computed(
     () => this.attendanceList().filter((r) => r.status === 'PRESENT').length,
@@ -91,14 +93,12 @@ export class AttendanceList implements OnInit, OnDestroy {
     () => this.attendanceList().filter((r) => r.status === 'ABSENT').length,
   );
 
-  // --- Animated counters (what the cards render) ---
   readonly animatedTotal = signal(0);
   readonly animatedPresent = signal(0);
   readonly animatedAbsent = signal(0);
 
   private readonly animationFrames = new Map<string, number>();
 
-  // --- Selection-derived flags used to disable the bulk buttons ---
   readonly selectedRows = computed(() => {
     const ids = new Set(this.selectedEmployeeIds());
     return this.attendanceList().filter((r) => ids.has(r.employeeId));
@@ -122,15 +122,13 @@ export class AttendanceList implements OnInit, OnDestroy {
     });
   }
 
-  // --- Employee State ---
   employeeRemarks = '';
   isEmployeeMarking = signal(false);
   currentStatus = signal<string | null>(null);
   isLoadingStatus = signal(false);
 
   ngOnInit(): void {
-    const role = this.auth.getRole ? this.auth.getRole() : localStorage.getItem('role');
-    this.isAdmin = role === 'ADMIN';
+    this.isAdmin = this.auth.isAdmin();
 
     if (this.isAdmin) {
       this.loadAttendance();
@@ -144,9 +142,6 @@ export class AttendanceList implements OnInit, OnDestroy {
     this.animationFrames.clear();
   }
 
-  // ==========================================
-  // COUNTER ANIMATION
-  // ==========================================
   private animateCounter(key: string, target: number, valueSignal: WritableSignal<number>): void {
     const runningFrame = this.animationFrames.get(key);
     if (runningFrame !== undefined) {
@@ -194,7 +189,12 @@ export class AttendanceList implements OnInit, OnDestroy {
     this.isLoading.set(true);
     this.attendanceService.getDailyAttendance(this.selectedDate()).subscribe({
       next: (data) => {
-        this.attendanceList.set(data);
+        const currentEmployeeId = this.auth.user()?.employeeId;
+        this.attendanceList.set(
+          currentEmployeeId == null
+            ? data
+            : data.filter((employee) => employee.employeeId !== currentEmployeeId),
+        );
         this.isLoading.set(false);
       },
       error: (err) => {

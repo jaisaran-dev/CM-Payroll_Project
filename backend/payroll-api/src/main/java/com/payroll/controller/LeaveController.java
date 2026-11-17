@@ -25,7 +25,7 @@ public class LeaveController {
     // ==========================================
 
     @PostMapping("/employee/apply")
-    @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER')")
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public ResponseEntity<ApiResponse<LeaveResponse>> applyLeave(
             @RequestBody LeaveRequest request, Authentication authentication) {
         LeaveResponse data = leaveService.applyLeave(request, authentication.getName());
@@ -34,7 +34,7 @@ public class LeaveController {
     }
 
     @PutMapping("/employee/update/{id}")
-    @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER')")
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public ResponseEntity<ApiResponse<LeaveResponse>> updateLeave(
             @PathVariable Long id, @RequestBody LeaveRequest request, Authentication authentication) {
         LeaveResponse data = leaveService.updateLeave(id, request, authentication.getName());
@@ -43,7 +43,7 @@ public class LeaveController {
     }
 
     @DeleteMapping("/employee/cancel/{id}")
-    @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER')")
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public ResponseEntity<ApiResponse<String>> cancelLeave(
             @PathVariable Long id, Authentication authentication) {
         leaveService.cancelLeave(id, authentication.getName());
@@ -52,7 +52,7 @@ public class LeaveController {
     }
 
     @GetMapping("/employee/my-leaves")
-    @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER')")
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public ResponseEntity<ApiResponse<List<LeaveResponse>>> getMyLeaves(Authentication authentication) {
         List<LeaveResponse> data = leaveService.getMyLeaves(authentication.getName());
         return ResponseEntity.ok(ApiResponse.<List<LeaveResponse>>builder()
